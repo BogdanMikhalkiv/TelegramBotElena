@@ -13,7 +13,7 @@ public class MyTelegramBot  implements SpringLongPollingBot {
     private final UpdateConsumer updateConsumer;
 
     @Value("${bot.token}")
-    private String botToken;
+    private  String botToken;
 
     public MyTelegramBot(UpdateConsumer updateConsumer, @Value("${bot.token}") String botToken) {
         this.updateConsumer = updateConsumer;
