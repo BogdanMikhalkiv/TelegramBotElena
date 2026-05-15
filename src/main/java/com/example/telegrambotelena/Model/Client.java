@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
 public class Client {
     BotStage botStage;
     String name;

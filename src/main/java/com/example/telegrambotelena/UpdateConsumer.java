@@ -40,7 +40,14 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
     @SneakyThrows
     @Override
     public void consume(Update update) {
-        Client session = clientMap.computeIfAbsent(
+        System.out.println(getChatID(update));
+        Long chatId = getChatID(update);
+
+        if (chatId == null){
+            return;
+        }
+
+         client = clientMap.computeIfAbsent(
                 getChatID(update),
                 k -> Client.builder().botStage(BotStage.IDLE).build());
 
@@ -49,7 +56,9 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 sendMainMenu(getChatID(update));
             } else {
                // sendMsg(update.getMessage().getChatId(), "привет , я тебя не понимаю" );
-                questionnaireFormMethod(getChatID(update),session, update);
+                if (client.getBotStage() != BotStage.IDLE) {
+                    questionnaireFormMethod(chatId, client, update);
+                }
             }
         } else if (update.hasCallbackQuery()) {
             handleCallbackQuery(update.getCallbackQuery(), update, client);
@@ -67,7 +76,12 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
     }
 
     public Long getChatID(Update update) {
-        return update.getMessage().getChatId();
+        if (update.hasMessage()) {
+            return update.getMessage().getChatId();
+        } else if (update.hasCallbackQuery()) {
+            return update.getCallbackQuery().getMessage().getChatId();
+        }
+        return null;
     }
 
     private void handleCallbackQuery(CallbackQuery callbackQuery, Update update, Client client) {
@@ -83,18 +97,20 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
     }
 
     private void questionnaireFormMethod(Long chatID, Client client, Update update) {
-        sendMsg(chatID, "Введите фамилию:");
         String text = update.getMessage().getText();
         switch (client.getBotStage()) {
 
             case WAITING_NAME:
                 client.setName(text);
                 client.setBotStage(BotStage.WAITING_SURNAME);
+                sendMsg(chatID, "Введите фамилию:");
+
                 break;
 
             case WAITING_SURNAME:
                 client.setSurname(text);
                 client.setBotStage(BotStage.IDLE);
+                sendMsg(chatID, client.toString());
                 break;
 
         }
