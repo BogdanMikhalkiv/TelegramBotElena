@@ -38,10 +38,11 @@ public class Client {
     String flatNumber;
     String postcode;
     String telephone;
-    LocalDate lastArrivalDate;
+    String lastArrivalDate;
     String passportNumber;
     String residenceCard;
-    String residenceCardNumber;
+    String residenceCardExpireDate;
+
 
 
 

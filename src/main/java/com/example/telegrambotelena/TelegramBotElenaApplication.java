@@ -15,18 +15,6 @@ public class TelegramBotElenaApplication {
         SpringApplication.run(TelegramBotElenaApplication.class, args);
         //test
 
-        try {
-            GoogleSheetsLiveTest test = new GoogleSheetsLiveTest();
-            test.setup();
-            test.writeData();
-            System.out.println("--- ТЕСТ: Данные успешно отправлены в таблицу! ---");
-        } catch (GeneralSecurityException e) {
-            throw new RuntimeException(e);
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-
-        }
     }
 
 }

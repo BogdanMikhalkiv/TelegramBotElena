@@ -2,6 +2,7 @@ package com.example.telegrambotelena.BotStageEnum;
 
 public enum BotStage {
     IDLE,
+    WAITING_EMAIL,
     WAITING_NAME,
     WAITING_SURNAME,
     WAITING_SURNAME_PREVIOUS,
@@ -33,5 +34,5 @@ public enum BotStage {
     WAITING_LAST_ARRIVAL_DATE,
     WAITING_PASSPORT_NUMBER,
     WAITING_RESIDENCE_CARD,
-    WAITING_RESIDENCE_CARD_NUMBER
+    WAITING_RESIDENCE_CARD_EXPIRE_DATE
 }

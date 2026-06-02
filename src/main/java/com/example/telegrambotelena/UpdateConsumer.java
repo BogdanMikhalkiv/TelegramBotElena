@@ -21,6 +21,7 @@ import org.telegram.telegrambots.meta.generics.TelegramClient;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
     public void consume(Update update) {
         System.out.println(getChatID(update));
         Long chatId = getChatID(update);
+        // System.out.println(update.getMessage().getFrom().getUserName() + " " + update.getMessage().getFrom().getFirstName());
 
         if (chatId == null){
             return;
@@ -62,8 +64,6 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                // sendMsg(update.getMessage().getChatId(), "привет , я тебя не понимаю" );
                 if (client.getBotStage() != BotStage.IDLE) {
                     questionnaireFormMethod(chatId, client, update);
-                } else {
-
                 }
             }
         } else if (update.hasCallbackQuery()) {
@@ -97,14 +97,20 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
 
         switch (data) {
             case "questionnaire":
-                client.setBotStage(BotStage.WAITING_NAME);
-                sendMsg(chatID,"Введите имя");
+                client.setBotStage(BotStage.WAITING_EMAIL);
+                sendMsg(chatID,"Введите Вашу электронную почту:");
         }
     }
 
     private void questionnaireFormMethod(Long chatID, Client client, Update update) {
         String text = update.getMessage().getText();
         switch (client.getBotStage()) {
+
+            case WAITING_EMAIL:
+                client.setEmail(text);
+                client.setBotStage(BotStage.WAITING_NAME);
+                sendMsg(chatID, "Введите ваше имя:");
+                break;
 
             case WAITING_NAME:
                 client.setName(text);
@@ -131,9 +137,20 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 break;
 
             case WAITING_DATE_OF_BIRTH:
-                client.setDateOfBirth(LocalDate.parse( text));
-                client.setBotStage(BotStage.WAITING_FATHERS_NAME);
-                sendMsg(chatID, "Введите имя вашего отца:");
+                try {
+                    LocalDate date = LocalDate.parse(text);
+
+                    if (date.isAfter(LocalDate.now())) {
+                        sendMsg(chatID, "Дата рождения не может быть в будущем! Введите вашу дату рождения (в формате ГГГГ-ММ-ДД):");
+                    } else {
+                        client.setDateOfBirth(date); // или date, если в классе Client тип поля LocalDate
+                        client.setBotStage(BotStage.WAITING_FATHERS_NAME);
+                        sendMsg(chatID, "Введите имя вашего отца:");
+                    }
+
+                } catch (DateTimeParseException e) {
+                    sendMsg(chatID, "Неправильный формат даты! Пожалуйста, введите её строго в формате ГГГГ-ММ-ДД (например: 1995-12-25):");
+                }
                 break;
 
             case WAITING_FATHERS_NAME:
@@ -245,9 +262,17 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 break;
 
             case WAITING_LAST_ARRIVAL_DATE:
-                client.setLastArrivalDate(LocalDate.parse(text));
-                client.setBotStage(BotStage.WAITING_PASSPORT_NUMBER);
-                sendMsg(chatID, "Введите серию и номер вашего паспорта:");
+                try {
+                    LocalDate LAST_ARRIVAL_DATE = LocalDate.parse(text);
+
+                    client.setLastArrivalDate(text);
+                    client.setBotStage(BotStage.WAITING_PASSPORT_NUMBER);
+                    sendMsg(chatID, "Введите серию и номер вашего паспорта:");
+                }catch (DateTimeParseException e) {
+                    sendMsg(chatID, "Неправильный формат даты! Пожалуйста, введите её строго в формате ГГГГ-ММ-ДД (например: 1995-12-25):");
+                }
+
+
                 break;
 
             case WAITING_PASSPORT_NUMBER:
@@ -257,33 +282,52 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 break;
 
             case WAITING_RESIDENCE_CARD:
+
                 client.setResidenceCard(text);
-                client.setBotStage(BotStage.WAITING_RESIDENCE_CARD_NUMBER);
-                sendMsg(chatID, "Введите номер вашей карты побыту (если есть, иначе '-'):");
+
+                if (text.equals("-")) {
+                    client.setResidenceCardExpireDate("-");
+                    client.setBotStage(BotStage.IDLE);
+                    sendMsg(chatID, "Спасибо! Анкета успешно заполнена.");
+                    writeDataToGoogleSheet(client);
+                } else {
+                    client.setBotStage(BotStage.WAITING_RESIDENCE_CARD_EXPIRE_DATE);
+                    sendMsg(chatID, "Введите дату окончания карты побыту ГГГГ-ММ-ДД (если есть, иначе '-'):");
+                }
                 break;
 
-            case WAITING_RESIDENCE_CARD_NUMBER:
-                client.setResidenceCardNumber(text);
-                client.setBotStage(BotStage.IDLE);
-                sendMsg(chatID, "Спасибо! Анкета успешно заполнена.");
+            case WAITING_RESIDENCE_CARD_EXPIRE_DATE:
 
                 try {
-                    GoogleSheetsLiveTest test = new GoogleSheetsLiveTest();
-                    test.setup();
-                    test.writeData(client);
-                    System.out.println("--- ТЕСТ: Данные успешно отправлены в таблицу! ---");
-                } catch (GeneralSecurityException e) {
-                    throw new RuntimeException(e);
+                    LocalDate RESIDENCE_CARD_EXPIRE_DATE = LocalDate.parse(text);
 
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-
+                    client.setResidenceCardExpireDate(text);
+                    client.setBotStage(BotStage.IDLE);
+                    sendMsg(chatID, "Спасибо! Анкета успешно заполнена.");
+                    writeDataToGoogleSheet(client);
+                } catch (DateTimeParseException e) {
+                    sendMsg(chatID, "Неправильный формат даты! Пожалуйста, введите её строго в формате ГГГГ-ММ-ДД (например: 1995-12-25):");
                 }
 
                 break;
 
+
+
         }
 
+    }
+
+    private void writeDataToGoogleSheet(Client client) {
+        try {
+            GoogleSheetsLiveTest test = new GoogleSheetsLiveTest();
+            test.setup();
+            test.writeData(client);
+            System.out.println("--- ТЕСТ: Данные успешно отправлены в таблицу! ---");
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
