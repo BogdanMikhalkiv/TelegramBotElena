@@ -1,8 +1,12 @@
 package com.example.telegrambotelena;
 
+import com.example.telegrambotelena.GoogleAPIConfig.GoogleSheetsLiveTest;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
+
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 public class TelegramBotElenaApplication {
@@ -10,6 +14,19 @@ public class TelegramBotElenaApplication {
     public static void main(String[] args) {
         SpringApplication.run(TelegramBotElenaApplication.class, args);
         //test
+
+        try {
+            GoogleSheetsLiveTest test = new GoogleSheetsLiveTest();
+            test.setup();
+            test.writeData();
+            System.out.println("--- ТЕСТ: Данные успешно отправлены в таблицу! ---");
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException(e);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+
+        }
     }
 
 }
