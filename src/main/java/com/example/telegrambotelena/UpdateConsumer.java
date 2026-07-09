@@ -25,6 +25,8 @@ import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
@@ -32,6 +34,10 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
     private Client client;
     private boolean questionnaireMode = false;
     private final Map<Long,Client> clientMap = new HashMap<>();
+    private final Pattern VALID_EMAIL_ADDRESS_REGEX =
+            Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
+    private final Pattern ONLY_LETTERS_REGEX = Pattern.compile("^[a-zA-Z]+$");
+
 
     @Value("${bot.token}")
     private  String botToken;
@@ -102,17 +108,33 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
         }
     }
 
+    private boolean isValidEmailFormat(String emailStr) {
+        Matcher matcher = VALID_EMAIL_ADDRESS_REGEX.matcher(emailStr);
+        return matcher.matches();
+    }
+
+    private boolean isValidOnlyLettersInText(String text) {
+        Matcher matcher = ONLY_LETTERS_REGEX.matcher(text);
+        return matcher.matches();
+    }
+
     private void questionnaireFormMethod(Long chatID, Client client, Update update) {
         String text = update.getMessage().getText();
         switch (client.getBotStage()) {
 
             case WAITING_EMAIL:
-                client.setEmail(text);
-                client.setBotStage(BotStage.WAITING_NAME);
-                sendMsg(chatID, "Введите ваше имя:");
+                if (!isValidEmailFormat(text)) {
+                    sendMsg(chatID, "Неправильный формат эл. почты! Внимательно проверьте!");
+                    System.out.println(client.getBotStage());
+                } else {
+                    client.setEmail(text);
+                    client.setBotStage(BotStage.WAITING_NAME);
+                    sendMsg(chatID, "Введите ваше имя:");
+                }
                 break;
 
             case WAITING_NAME:
+
                 client.setName(text);
                 client.setBotStage(BotStage.WAITING_SURNAME);
                 sendMsg(chatID, "Введите вашу текущую фамилию:");

@@ -42,15 +42,6 @@ public class Client {
     String passportNumber;
     String residenceCard;
     String residenceCardExpireDate;
-
-
-
-
-
-
-
-
-
     public Client(BotStage botStage) {
         this.botStage = botStage;
     }
