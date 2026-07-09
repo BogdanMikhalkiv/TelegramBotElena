@@ -38,7 +38,7 @@ public class Client {
     String flatNumber;
     String postcode;
     String telephone;
-    String lastArrivalDate;
+    LocalDate lastArrivalDate;
     String passportNumber;
     String residenceCard;
     String residenceCardExpireDate;

@@ -3,7 +3,6 @@ package com.example.telegrambotelena;
 import com.example.telegrambotelena.BotStageEnum.BotStage;
 import com.example.telegrambotelena.GoogleAPIConfig.GoogleSheetsLiveTest;
 import com.example.telegrambotelena.Model.Client;
-import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -12,7 +11,6 @@ import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateC
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
@@ -36,7 +34,13 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
     private final Map<Long,Client> clientMap = new HashMap<>();
     private final Pattern VALID_EMAIL_ADDRESS_REGEX =
             Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
-    private final Pattern ONLY_LETTERS_REGEX = Pattern.compile("^[a-zA-Z]+$");
+    private final Pattern ONLY_LATIN_LETTERS_OR_SKIP_REGEX = Pattern.compile("^([a-zA-Z]+|-)$");
+    private final Pattern HEIGHT_REGEX = Pattern.compile("^\\d{1,3}$");
+    private final Pattern PESEL_REGEX = Pattern.compile("^\\d{11}$");
+    private final Pattern ALL_LETTERS_REGEX = Pattern.compile("^\\p{L}+$");
+    private final Pattern POSTCODE_REGEX = Pattern.compile("^[0-9]{2}-[0-9]{3}$");
+    private final Pattern PHONE_NUMBER_REGEX = Pattern.compile("^(\\+48)?\\d{9}$");
+
 
 
     @Value("${bot.token}")
@@ -114,7 +118,32 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
     }
 
     private boolean isValidOnlyLettersInText(String text) {
-        Matcher matcher = ONLY_LETTERS_REGEX.matcher(text);
+        Matcher matcher = ONLY_LATIN_LETTERS_OR_SKIP_REGEX.matcher(text);
+        return matcher.matches();
+    }
+
+    private boolean isValidHeight(String text) {
+        Matcher matcher = HEIGHT_REGEX.matcher(text);
+        return matcher.matches();
+    }
+
+    private boolean isValidPESEL(String text) {
+        Matcher matcher = PESEL_REGEX.matcher(text);
+        return matcher.matches();
+    }
+
+    private  boolean isValideAllLettersUnicode(String text) {
+        Matcher matcher = ALL_LETTERS_REGEX.matcher(text);
+        return matcher.matches();
+    }
+
+    private boolean isValidePostcode(String text) {
+        Matcher matcher = POSTCODE_REGEX.matcher(text);
+        return matcher.matches();
+    }
+
+    private boolean isValidPhoneNumber(String text) {
+        Matcher matcher = PHONE_NUMBER_REGEX.matcher(text);
         return matcher.matches();
     }
 
@@ -129,33 +158,49 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 } else {
                     client.setEmail(text);
                     client.setBotStage(BotStage.WAITING_NAME);
-                    sendMsg(chatID, "Введите ваше имя:");
+                    sendMsg(chatID, "Введите ваше имя в латинице:");
                 }
                 break;
 
             case WAITING_NAME:
-
-                client.setName(text);
-                client.setBotStage(BotStage.WAITING_SURNAME);
-                sendMsg(chatID, "Введите вашу текущую фамилию:");
+                if (!isValidOnlyLettersInText(text)) {
+                    sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы ! Проверьте внимательно!");
+                } else {
+                    client.setName(text);
+                    client.setBotStage(BotStage.WAITING_SURNAME);
+                    sendMsg(chatID, "Введите вашу текущую фамилию в латинице:");
+                }
                 break;
 
             case WAITING_SURNAME:
-                client.setSurnameCurrent(text);
-                client.setBotStage(BotStage.WAITING_SURNAME_PREVIOUS);
-                sendMsg(chatID, "Введите вашу предыдущую фамилию (если меняли, иначе '-') :");
+                if (!isValidOnlyLettersInText(text)) {
+                    sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы! Проверьте внимательно!");
+                } else {
+                    client.setSurnameCurrent(text);
+                    client.setBotStage(BotStage.WAITING_SURNAME_PREVIOUS);
+                    sendMsg(chatID, "Введите вашу предыдущую фамилию в латинице (если не было предыдущей фамилии,  просто прочерк '-') :");
+                }
                 break;
 
             case WAITING_SURNAME_PREVIOUS:
-                client.setSurnamePrevious(text);
-                client.setBotStage(BotStage.WAITING_SURNAME_MAIDEN);
-                sendMsg(chatID, "Введите вашу девичью фамилию (если актуально, иначе '-'):");
+                if (!isValidOnlyLettersInText(text)) {
+                    sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы! Проверьте внимательно!");
+                } else {
+                    client.setSurnamePrevious(text);
+                    client.setBotStage(BotStage.WAITING_SURNAME_MAIDEN);
+                    sendMsg(chatID, "Введите вашу девичью фамилию в латинице (если не было, просто прочерк '-'):");
+                }
+
                 break;
 
             case WAITING_SURNAME_MAIDEN:
-                client.setSurnameMaiden(text);
-                client.setBotStage(BotStage.WAITING_DATE_OF_BIRTH);
-                sendMsg(chatID, "Введите вашу дату рождения (в формате ГГГГ-ММ-ДД):");
+                if (!isValidOnlyLettersInText(text)) {
+                    sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы! Проверьте внимательно!");
+                } else {
+                    client.setSurnameMaiden(text);
+                    client.setBotStage(BotStage.WAITING_DATE_OF_BIRTH);
+                    sendMsg(chatID, "Введите вашу дату рождения (в формате ГГГГ-ММ-ДД):");
+                }
                 break;
 
             case WAITING_DATE_OF_BIRTH:
@@ -167,7 +212,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     } else {
                         client.setDateOfBirth(date); // или date, если в классе Client тип поля LocalDate
                         client.setBotStage(BotStage.WAITING_FATHERS_NAME);
-                        sendMsg(chatID, "Введите имя вашего отца:");
+                        sendMsg(chatID, "Введите имя вашего отца в латинице:");
                     }
 
                 } catch (DateTimeParseException e) {
@@ -176,23 +221,36 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 break;
 
             case WAITING_FATHERS_NAME:
-                client.setFathersName(text);
-                client.setBotStage(BotStage.WAITING_MOTHERS_NAME);
-                sendMsg(chatID, "Введите имя вашей матери:");
+                if (!isValidOnlyLettersInText(text)) {
+                    sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы! Проверьте внимательно!");
+                } else {
+                    client.setFathersName(text);
+                    client.setBotStage(BotStage.WAITING_MOTHERS_NAME);
+                    sendMsg(chatID, "Введите имя вашей матери в латинице:");
+                }
                 break;
 
             case WAITING_MOTHERS_NAME:
-                client.setMothersName(text);
-                client.setBotStage(BotStage.WAITING_MOTHERS_SURNAME_MAIDEN);
-                sendMsg(chatID, "Введите девичью фамилию вашей матери:");
+                if (!isValidOnlyLettersInText(text)) {
+                    sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы! Проверьте внимательно!");
+                } else {
+                    client.setMothersName(text);
+                    client.setBotStage(BotStage.WAITING_MOTHERS_SURNAME_MAIDEN);
+                    sendMsg(chatID, "Введите девичью фамилию вашей матери в латинице:");
+                }
                 break;
 
             case WAITING_MOTHERS_SURNAME_MAIDEN:
-                client.setMothersSurnameMaiden(text);
-                client.setBotStage(BotStage.WAITING_MARITAL_STATUS);
-                sendMsg(chatID, "Укажите ваше семейное положение (например: женат/замужем, холост/незамужем):");
+                if (!isValidOnlyLettersInText(text)) {
+                    sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы! Проверьте внимательно!");
+                } else {
+                    client.setMothersSurnameMaiden(text);
+                    client.setBotStage(BotStage.WAITING_MARITAL_STATUS);
+                    sendMsg(chatID, "Укажите ваше семейное положение (например: женат/замужем, холост/незамужем):");
+                }
                 break;
 
+            //добавить кнопки с выбором семейного положения!
             case WAITING_MARITAL_STATUS:
                 client.setMaritalStatus(text);
                 client.setBotStage(BotStage.WAITING_CITY_OF_BIRTH);
@@ -200,41 +258,68 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 break;
 
             case WAITING_CITY_OF_BIRTH:
-                client.setCityOfBirth(text);
-                client.setBotStage(BotStage.WAITING_NATIONALITY);
-                sendMsg(chatID, "Укажите вашу национальность:");
+                if (!isValideAllLettersUnicode(text)){
+                    sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
+                } else {
+                    client.setCityOfBirth(text);
+                    client.setBotStage(BotStage.WAITING_NATIONALITY);
+                    sendMsg(chatID, "Укажите вашу национальность:");
+                }
                 break;
 
             case WAITING_NATIONALITY:
-                client.setNationality(text);
-                client.setBotStage(BotStage.WAITING_CITIZENSHIP);
-                sendMsg(chatID, "Укажите ваше гражданство:");
+                if (!isValideAllLettersUnicode(text)){
+                    sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
+                } else {
+                    client.setNationality(text);
+                    client.setBotStage(BotStage.WAITING_CITIZENSHIP);
+                    sendMsg(chatID, "Укажите ваше гражданство:");
+                }
                 break;
 
             case WAITING_CITIZENSHIP:
-                client.setCitizenship(text);
-                client.setBotStage(BotStage.WAITING_COUNTRY_OF_BIRTH);
-                sendMsg(chatID, "Укажите страну вашего рождения:");
+                if (!isValideAllLettersUnicode(text)){
+                    sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
+                } else {
+                    client.setCitizenship(text);
+                    client.setBotStage(BotStage.WAITING_COUNTRY_OF_BIRTH);
+                    sendMsg(chatID, "Укажите страну вашего рождения:");
+                }
                 break;
 
             case WAITING_COUNTRY_OF_BIRTH:
-                client.setCountryOfBirth(text);
-                client.setBotStage(BotStage.WAITING_HEIGHT);
-                sendMsg(chatID, "Укажите ваш рост (в сантиметрах):");
+                if (!isValideAllLettersUnicode(text)){
+                    sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
+                } else {
+                    client.setCountryOfBirth(text);
+                    client.setBotStage(BotStage.WAITING_HEIGHT);
+                    sendMsg(chatID, "Укажите ваш рост (в сантиметрах, например 180):");
+                }
                 break;
 
             case WAITING_HEIGHT:
-                client.setHeight(text);
-                client.setBotStage(BotStage.WAITING_PESEL);
-                sendMsg(chatID, "Введите ваш номер PESEL (если есть, иначе '-'):");
+                if (!isValidHeight(text)){
+                    sendMsg(chatID, "Рост должен быть ИСКЛЮЧИТЕЛЬНО в числовом формате, например : 180 или 167");
+                } else {
+                    client.setHeight(text);
+                    client.setBotStage(BotStage.WAITING_PESEL);
+                    sendMsg(chatID, "Введите ваш номер PESEL (если есть, иначе '-'):");
+                }
                 break;
+
 
             case WAITING_PESEL:
-                client.setPESEL(text);
-                client.setBotStage(BotStage.WAITING_EDUCATION);
-                sendMsg(chatID, "Укажите ваше образование (например: высшее, среднее):");
+
+                if (!isValidPESEL(text)){
+                    sendMsg(chatID, "PESEL должны быть ИСКЛЮЧИТЕЛЬНО в числовом виде и минимум 11 цифр! ");
+                } else {
+                    client.setPESEL(text);
+                    client.setBotStage(BotStage.WAITING_EDUCATION);
+                    sendMsg(chatID, "Укажите ваше образование (например: высшее, среднее):");
+                }
                 break;
 
+            //ДОБАВИТЬ КНОПКИ С ВЫБОРОМ ОБРАЗОВАНИЯ
             case WAITING_EDUCATION:
                 client.setEducation(text);
                 client.setBotStage(BotStage.WAITING_EYE_COLOUR);
@@ -242,21 +327,33 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 break;
 
             case WAITING_EYE_COLOUR:
-                client.setEyeColour(text);
-                client.setBotStage(BotStage.WAITING_CITY_OF_RESIDENCE);
-                sendMsg(chatID, "Введите город вашего текущего проживания:");
+                if (!isValideAllLettersUnicode(text)){
+                     sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
+                } else {
+                    client.setEyeColour(text);
+                    client.setBotStage(BotStage.WAITING_CITY_OF_RESIDENCE);
+                    sendMsg(chatID, "Введите город вашего текущего проживания по польски:");
+                }
                 break;
 
             case WAITING_CITY_OF_RESIDENCE:
-                client.setCityOfResidence(text);
-                client.setBotStage(BotStage.WAITING_STREET_OF_RESIDENCE);
-                sendMsg(chatID, "Введите улицу проживания:");
+                if (!isValideAllLettersUnicode(text)){
+                    sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
+                } else {
+                    client.setCityOfResidence(text);
+                    client.setBotStage(BotStage.WAITING_STREET_OF_RESIDENCE);
+                    sendMsg(chatID, "Введите улицу проживания по польски:");
+                }
                 break;
 
             case WAITING_STREET_OF_RESIDENCE:
-                client.setStreetOfResidence(text);
-                client.setBotStage(BotStage.WAITING_HOUSE_NUMBER);
-                sendMsg(chatID, "Введите номер дома:");
+                if (!isValideAllLettersUnicode(text)){
+                    sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
+                } else {
+                    client.setStreetOfResidence(text);
+                    client.setBotStage(BotStage.WAITING_HOUSE_NUMBER);
+                    sendMsg(chatID, "Введите номер дома:");
+                }
                 break;
 
             case WAITING_HOUSE_NUMBER:
@@ -272,26 +369,34 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 break;
 
             case WAITING_POSTCODE:
-                client.setPostcode(text);
-                client.setBotStage(BotStage.WAITING_TELEPHONE);
-                sendMsg(chatID, "Введите ваш контактный номер телефона:");
+                if (!isValidePostcode(text)) {
+                    sendMsg(chatID,"ВводимыЙ формат почтового индекса ДОЛЖЕН состоят из 5 цифр в формате: ХХ-ХХХ ");
+                } else {
+                    client.setPostcode(text);
+                    client.setBotStage(BotStage.WAITING_TELEPHONE);
+                    sendMsg(chatID, "Введите ваш контактный номер телефона:");
+                }
                 break;
 
             case WAITING_TELEPHONE:
-                client.setTelephone(text);
-                client.setBotStage(BotStage.WAITING_LAST_ARRIVAL_DATE);
-                sendMsg(chatID, "Введите дату вашего последнего въезда в страну (ГГГГ-ММ-ДД):");
+                if (!isValidPhoneNumber(text)) {
+                    sendMsg(chatID,"Номер телефона должен быть в следующих форматах: +48ХХХХХХХХХ или просто из 9 цифр");
+                } else {
+                    client.setTelephone(text);
+                    client.setBotStage(BotStage.WAITING_LAST_ARRIVAL_DATE);
+                    sendMsg(chatID, "Введите дату вашего последнего въезда в страну (ГГГГ-ММ-ДД):");
+                }
                 break;
 
             case WAITING_LAST_ARRIVAL_DATE:
                 try {
                     LocalDate LAST_ARRIVAL_DATE = LocalDate.parse(text);
 
-                    client.setLastArrivalDate(text);
+                    client.setLastArrivalDate(LAST_ARRIVAL_DATE);
                     client.setBotStage(BotStage.WAITING_PASSPORT_NUMBER);
                     sendMsg(chatID, "Введите серию и номер вашего паспорта:");
                 }catch (DateTimeParseException e) {
-                    sendMsg(chatID, "Неправильный формат даты! Пожалуйста, введите её строго в формате ГГГГ-ММ-ДД (например: 1995-12-25):");
+                    sendMsg(chatID, "Неправильный формат даты! Пожалуйста, введите её строго в формате ГГГГ-ММ-ДД (например - 1995-12-25):");
                 }
 
 
