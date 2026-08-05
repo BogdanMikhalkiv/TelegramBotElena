@@ -12,14 +12,18 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +61,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
     public void consume(Update update) {
         System.out.println(getChatID(update));
         Long chatId = getChatID(update);
-        // System.out.println(update.getMessage().getFrom().getUserName() + " " + update.getMessage().getFrom().getFirstName());
+
 
         if (chatId == null){
             return;
@@ -100,6 +104,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
         return null;
     }
 
+    @SneakyThrows
     private void handleCallbackQuery(CallbackQuery callbackQuery, Update update, Client client) {
         var data = callbackQuery.getData();
         var chatID = callbackQuery.getFrom().getId();
@@ -108,8 +113,35 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
         switch (data) {
             case "questionnaire":
                 client.setBotStage(BotStage.WAITING_EMAIL);
-                sendMsg(chatID,"Введите Вашу электронную почту:");
+                SendMessage sendMessage = SendMessage.builder()
+                        .text("Введите Вашу электронную почту:")
+                        .chatId(chatID)
+                        .build();
+                //startButton(sendMessage);
+                telegramClient.execute(sendMessage);
+                break;
+            case "married":
+                client.setMaritalStatus("Żonaty/Mężatka");
+                client.setBotStage(BotStage.WAITING_CITY_OF_BIRTH);
+                sendMsg(chatID, "Введите ваш город рождения:");
+                break;
+            case "unmarried":
+                client.setMaritalStatus("Kawaler/Panna");
+                client.setBotStage(BotStage.WAITING_CITY_OF_BIRTH);
+                sendMsg(chatID, "Введите ваш город рождения:");
+                break;
+            case "divorced":
+                client.setMaritalStatus("Rozwodnik");
+                client.setBotStage(BotStage.WAITING_CITY_OF_BIRTH);
+                sendMsg(chatID, "Введите ваш город рождения:");
+                break;
+            case "widow":
+                client.setMaritalStatus("Wdowiec/wdowa");
+                client.setBotStage(BotStage.WAITING_CITY_OF_BIRTH);
+                sendMsg(chatID, "Введите ваш город рождения:");
+                break;
         }
+
     }
 
     private boolean isValidEmailFormat(String emailStr) {
@@ -147,9 +179,12 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
         return matcher.matches();
     }
 
+    @SneakyThrows
     private void questionnaireFormMethod(Long chatID, Client client, Update update) {
         String text = update.getMessage().getText();
         switch (client.getBotStage()) {
+
+
 
             case WAITING_EMAIL:
                 if (!isValidEmailFormat(text)) {
@@ -157,8 +192,10 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     System.out.println(client.getBotStage());
                 } else {
                     client.setEmail(text);
-                    client.setBotStage(BotStage.WAITING_NAME);
-                    sendMsg(chatID, "Введите ваше имя в латинице:");
+                   // client.setBotStage(BotStage.WAITING_NAME);
+                    client.setBotStage(BotStage.WAITING_MARITAL_STATUS);
+                    //sendMsg(chatID, "Введите ваше имя в латинице:");
+                    maritalStatus(chatID);
                 }
                 break;
 
@@ -246,7 +283,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 } else {
                     client.setMothersSurnameMaiden(text);
                     client.setBotStage(BotStage.WAITING_MARITAL_STATUS);
-                    sendMsg(chatID, "Укажите ваше семейное положение (например: женат/замужем, холост/незамужем):");
+                    maritalStatus(chatID);
                 }
                 break;
 
@@ -415,7 +452,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 if (text.equals("-")) {
                     client.setResidenceCardExpireDate("-");
                     client.setBotStage(BotStage.IDLE);
-                    sendMsg(chatID, "Спасибо! Анкета успешно заполнена.");
+                    sendMsg(chatID, "Спасибо! Анкета успешно заполнена.\n Проверьте ваши данные\n" + client);
                     writeDataToGoogleSheet(client);
                 } else {
                     client.setBotStage(BotStage.WAITING_RESIDENCE_CARD_EXPIRE_DATE);
@@ -430,7 +467,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
 
                     client.setResidenceCardExpireDate(text);
                     client.setBotStage(BotStage.IDLE);
-                    sendMsg(chatID, "Спасибо! Анкета успешно заполнена.");
+                    sendMsg(chatID, "Спасибо! Анкета успешно заполнена.\n Проверьте ваши данные\n" + client);
                     writeDataToGoogleSheet(client);
                 } catch (DateTimeParseException e) {
                     sendMsg(chatID, "Неправильный формат даты! Пожалуйста, введите её строго в формате ГГГГ-ММ-ДД (например: 1995-12-25):");
@@ -455,6 +492,71 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void startButton(SendMessage sendMessage) {
+        // Create a keyboard
+
+        // Create a list of keyboard rows
+        List<KeyboardRow> keyboard = new ArrayList<>();
+        // First keyboard row
+        KeyboardRow keyboardFirstRow = new KeyboardRow();
+        // Add buttons to the first keyboard row
+        keyboardFirstRow.add(new KeyboardButton("/start"));
+        // Add all of the keyboard rows to the list
+        keyboard.add(keyboardFirstRow);
+        ReplyKeyboardMarkup replyKeyboardMarkup = ReplyKeyboardMarkup.builder()
+                .keyboard(keyboard)
+                .selective(true)
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(true)
+                .build();
+        sendMessage.setReplyMarkup(replyKeyboardMarkup);
+
+        // and assign this list to our keyboard
+        replyKeyboardMarkup.setKeyboard(keyboard);
+    }
+
+    private void commands(Long chatId) {
+
+    }
+    @SneakyThrows
+    private void maritalStatus(Long chatId) {
+        System.out.println("dfdfdfdfkgfgonbodfgnbodfgnbfg");
+        SendMessage message = SendMessage.builder()
+                .text("Укажите ваше семейное положение: ")
+                .chatId(chatId)
+                .build();
+
+        var button1 = InlineKeyboardButton.builder()
+                .text("Женат/Замужем")
+                .callbackData("married")
+                .build();
+        var button2 = InlineKeyboardButton.builder()
+                .text("Холост/Незамужем")
+                .callbackData("unmarried")
+                .build();
+        var button3 = InlineKeyboardButton.builder()
+                .text("Разведен/Разведена")
+                .callbackData("divorced")
+                .build();
+        var button4 = InlineKeyboardButton.builder()
+                .text("Вдовец/Вдова")
+                .callbackData("widow")
+                .build();
+
+        List<InlineKeyboardRow> inlineKeyboardRows =
+                List.of(new InlineKeyboardRow(button1),
+                        new InlineKeyboardRow(button2),
+                        new InlineKeyboardRow(button3),
+                        new InlineKeyboardRow(button4)
+                );
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboardRows);
+
+        message.setReplyMarkup(inlineKeyboardMarkup);
+
+        telegramClient.execute(message);
     }
 
 
