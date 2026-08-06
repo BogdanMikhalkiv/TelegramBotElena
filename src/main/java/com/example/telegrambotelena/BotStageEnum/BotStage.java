@@ -34,5 +34,15 @@ public enum BotStage {
     WAITING_LAST_ARRIVAL_DATE,
     WAITING_PASSPORT_NUMBER,
     WAITING_RESIDENCE_CARD,
-    WAITING_RESIDENCE_CARD_EXPIRE_DATE
+    WAITING_RESIDENCE_CARD_EXPIRE_DATE;
+
+    static public final BotStage[] values = values();
+
+    public BotStage prev() {
+        return values[(ordinal() - 1  + values.length) % values.length];
+    }
+
+    public BotStage next() {
+        return values[(ordinal() + 1) % values.length];
+    }
 }

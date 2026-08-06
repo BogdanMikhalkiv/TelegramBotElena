@@ -92,6 +92,20 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 .chatId(chatID)
                 .build();
 
+        var prevBtn = InlineKeyboardButton.builder()
+                .text("Назад")
+                .callbackData("back")
+                .build();
+
+        InlineKeyboardButton button = new InlineKeyboardButton("dfdf");
+
+        List<InlineKeyboardRow> inlineKeyboardRows =
+                List.of(new InlineKeyboardRow(prevBtn));
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboardRows);
+
+        sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+
         telegramClient.execute(sendMessage);
     }
 
@@ -110,6 +124,9 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
         var chatID = callbackQuery.getFrom().getId();
         var user = callbackQuery.getFrom();
 
+
+
+
         switch (data) {
             case "questionnaire":
                 client.setBotStage(BotStage.WAITING_EMAIL);
@@ -117,7 +134,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                         .text("Введите Вашу электронную почту:")
                         .chatId(chatID)
                         .build();
-                //startButton(sendMessage);
+                startButton(sendMessage);
                 telegramClient.execute(sendMessage);
                 break;
             case "married":
@@ -140,8 +157,49 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 client.setBotStage(BotStage.WAITING_CITY_OF_BIRTH);
                 sendMsg(chatID, "Введите ваш город рождения:");
                 break;
+
+            case "back":
+                client.setBotStage(client.getBotStage().prev());
+                sendStageText(chatID, client.getBotStage());
+
         }
 
+    }
+
+    public void sendStageText(Long chatId, BotStage stage) {
+        String text = switch (stage) {
+            case IDLE -> null;
+            case WAITING_EMAIL -> "Введите Вашу электронную почту:";
+            case WAITING_NAME -> "Введите ваше имя в латинице:";
+            case WAITING_SURNAME -> "Введите вашу текущую фамилию в латинице:";
+            case WAITING_SURNAME_PREVIOUS -> "Введите вашу предыдущую фамилию в латинице (если не было предыдущей фамилии,  просто прочерк '-') :";
+            case WAITING_SURNAME_MAIDEN -> "Введите вашу девичью фамилию в латинице (если не было, просто прочерк '-'):";
+            case WAITING_DATE_OF_BIRTH -> "Введите вашу дату рождения (в формате ГГГГ-ММ-ДД):";
+            case WAITING_FATHERS_NAME-> "Введите имя вашего отца в латинице:";
+            case WAITING_MOTHERS_NAME -> "Введите имя вашей матери в латинице:";
+            case WAITING_MOTHERS_SURNAME_MAIDEN -> "Введите девичью фамилию вашей матери в латинице:";
+            case WAITING_MARITAL_STATUS -> "Укажите ваше семейное положение: ";
+            case WAITING_CITY_OF_BIRTH -> "Введите ваш город рождения:";
+            case WAITING_NATIONALITY -> "Укажите вашу национальность:";
+            case WAITING_CITIZENSHIP -> "Укажите ваше гражданство:";
+            case WAITING_COUNTRY_OF_BIRTH -> "Укажите страну вашего рождения:";
+            case WAITING_HEIGHT -> "Укажите ваш рост (в сантиметрах, например 180):";
+            case WAITING_PESEL -> "Введите ваш номер PESEL (если есть, иначе '-'):";
+            case WAITING_EDUCATION -> "Укажите ваше образование (например: высшее, среднее):";
+            case WAITING_EYE_COLOUR -> "Укажите цвет ваших глаз:";
+            case WAITING_CITY_OF_RESIDENCE -> "Введите город Вашего текущего проживания по польски:";
+            case WAITING_STREET_OF_RESIDENCE -> "Введите улицу проживания по польски:";
+            case WAITING_HOUSE_NUMBER -> "Введите номер дома:";
+            case WAITING_FLAT_NUMBER -> "Введите номер квартиры (если нет, введите '-'):";
+            case WAITING_POSTCODE -> "Введите ваш почтовый индекс:";
+            case WAITING_TELEPHONE -> "Введите ваш контактный номер телефона:";
+            case WAITING_LAST_ARRIVAL_DATE -> "Введите дату вашего последнего въезда в Польшу (ГГГГ-ММ-ДД):";
+            case WAITING_PASSPORT_NUMBER -> "Введите серию и номер вашего паспорта:";
+            case WAITING_RESIDENCE_CARD -> "Укажите тип вашей карты побыту (например: сталый/часовый , либо '-'):";
+            case WAITING_RESIDENCE_CARD_EXPIRE_DATE -> "Введите дату окончания карты побыту ГГГГ-ММ-ДД (если есть, иначе '-'):";
+        };
+
+        sendMsg(chatId, text);
     }
 
     private boolean isValidEmailFormat(String emailStr) {
@@ -187,19 +245,19 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
 
 
             case WAITING_EMAIL:
+
                 if (!isValidEmailFormat(text)) {
                     sendMsg(chatID, "Неправильный формат эл. почты! Внимательно проверьте!");
                     System.out.println(client.getBotStage());
                 } else {
                     client.setEmail(text);
-                   // client.setBotStage(BotStage.WAITING_NAME);
-                    client.setBotStage(BotStage.WAITING_MARITAL_STATUS);
-                    //sendMsg(chatID, "Введите ваше имя в латинице:");
-                    maritalStatus(chatID);
+                    client.setBotStage(BotStage.WAITING_NAME);
+                    sendMsg(chatID, "Введите ваше имя в латинице:");
                 }
                 break;
 
             case WAITING_NAME:
+
                 if (!isValidOnlyLettersInText(text)) {
                     sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы ! Проверьте внимательно!");
                 } else {
@@ -421,7 +479,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 } else {
                     client.setTelephone(text);
                     client.setBotStage(BotStage.WAITING_LAST_ARRIVAL_DATE);
-                    sendMsg(chatID, "Введите дату вашего последнего въезда в страну (ГГГГ-ММ-ДД):");
+                    sendMsg(chatID, "Введите дату вашего последнего въезда в Польшу (ГГГГ-ММ-ДД):");
                 }
                 break;
 
