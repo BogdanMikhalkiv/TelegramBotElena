@@ -104,7 +104,10 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
 
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboardRows);
 
-        sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+        if (!textMsg.equals("Введите Вашу электронную почту:")){
+            sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+        }
+
 
         telegramClient.execute(sendMessage);
     }
@@ -161,6 +164,14 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
             case "back":
                 client.setBotStage(client.getBotStage().prev());
                 sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "correct":
+                sendMsg(chatID,"Анкета успешно заполнена!");
+                client.setBotStage(BotStage.IDLE);
+                writeDataToGoogleSheet(client);
+                break;
+
 
         }
 
@@ -197,6 +208,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
             case WAITING_PASSPORT_NUMBER -> "Введите серию и номер вашего паспорта:";
             case WAITING_RESIDENCE_CARD -> "Укажите тип вашей карты побыту (например: сталый/часовый , либо '-'):";
             case WAITING_RESIDENCE_CARD_EXPIRE_DATE -> "Введите дату окончания карты побыту ГГГГ-ММ-ДД (если есть, иначе '-'):";
+            case VERIFICATION -> null;
         };
 
         sendMsg(chatId, text);
@@ -523,20 +535,47 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 try {
                     LocalDate RESIDENCE_CARD_EXPIRE_DATE = LocalDate.parse(text);
 
-                    client.setResidenceCardExpireDate(text);
-                    client.setBotStage(BotStage.IDLE);
-                    sendMsg(chatID, "Спасибо! Анкета успешно заполнена.\n Проверьте ваши данные\n" + client);
-                    writeDataToGoogleSheet(client);
+                    client.setResidenceCardExpireDate(RESIDENCE_CARD_EXPIRE_DATE.toString());
+                    client.setBotStage(BotStage.VERIFICATION);
+                    //client.setBotStage(BotStage.IDLE);
+
+                    //sendMsg(chatID, "Спасибо! Анкета успешно заполнена.\n Проверьте ваши данные\n" + client + "\n Если все верно , нажмите на кнопку ниже ⬇️ ");
+                    //writeDataToGoogleSheet(client);
+
+                    verificationMessage("Спасибо! Анкета успешно заполнена.\n Проверьте ваши данные: \n" + client + "\n Если все верно , нажмите на кнопку ниже ⬇️ ", chatID);
                 } catch (DateTimeParseException e) {
                     sendMsg(chatID, "Неправильный формат даты! Пожалуйста, введите её строго в формате ГГГГ-ММ-ДД (например: 1995-12-25):");
                 }
 
                 break;
 
+            case VERIFICATION:
 
+
+                break;
 
         }
 
+    }
+
+    @SneakyThrows
+    private void verificationMessage(String msg, Long chatId) {
+        SendMessage message = SendMessage.builder()
+                .text(msg)
+                .chatId(chatId)
+                .build();
+
+        var button1 = InlineKeyboardButton.builder()
+                .text("Все верно!")
+                .callbackData("correct")
+                .build();
+
+        List<InlineKeyboardRow> inlineKeyboardRows = List.of(new InlineKeyboardRow(button1));
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboardRows);
+
+        message.setReplyMarkup(inlineKeyboardMarkup);
+
+        telegramClient.execute(message);
     }
 
     private void writeDataToGoogleSheet(Client client) {
