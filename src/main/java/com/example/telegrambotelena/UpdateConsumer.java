@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;
     private Client client;
-    private boolean questionnaireMode = false;
+    private boolean questionnaireEditMode = false;
     private final Map<Long,Client> clientMap = new HashMap<>();
     private final Pattern VALID_EMAIL_ADDRESS_REGEX =
             Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
@@ -77,7 +77,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
             } else {
                // sendMsg(update.getMessage().getChatId(), "привет , я тебя не понимаю" );
                 if (client.getBotStage() != BotStage.IDLE) {
-                    questionnaireFormMethod(chatId, client, update);
+                    questionnaireFormMethod(chatId, client, update, questionnaireEditMode);
                 }
             }
         } else if (update.hasCallbackQuery()) {
@@ -169,7 +169,154 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
             case "correct":
                 sendMsg(chatID,"Анкета успешно заполнена!");
                 client.setBotStage(BotStage.IDLE);
+                questionnaireEditMode = false;
                 writeDataToGoogleSheet(client);
+                break;
+
+            case "edit":
+                questionnaireEditMode = true;
+                //client.setBotStage(BotStage.VERIFICATION);
+                editMessage("Пожалуйста, выберите НИЖЕ кнопку для изменения значения",chatID);
+                break;
+
+            case "edit_email":
+                client.setBotStage(BotStage.WAITING_EMAIL);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_name":
+                client.setBotStage(BotStage.WAITING_NAME);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_surnameCurrent":
+                client.setBotStage(BotStage.WAITING_SURNAME);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_surnamePrevious":
+                client.setBotStage(BotStage.WAITING_SURNAME_PREVIOUS);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_surnameMaiden":
+                client.setBotStage(BotStage.WAITING_SURNAME_MAIDEN);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_dateOfBirth":
+                client.setBotStage(BotStage.WAITING_DATE_OF_BIRTH);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_fathersName":
+                client.setBotStage(BotStage.WAITING_FATHERS_NAME);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_mothersName":
+                client.setBotStage(BotStage.WAITING_MOTHERS_NAME);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_mothersSurnameMaiden":
+                client.setBotStage(BotStage.WAITING_MOTHERS_SURNAME_MAIDEN);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_maritalStatus":
+                client.setBotStage(BotStage.WAITING_MARITAL_STATUS);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_cityOfBirth":
+                client.setBotStage(BotStage.WAITING_CITY_OF_BIRTH);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_nationality":
+                client.setBotStage(BotStage.WAITING_NATIONALITY);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_citizenship":
+                client.setBotStage(BotStage.WAITING_CITIZENSHIP);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_countryOfBirth":
+                client.setBotStage(BotStage.WAITING_COUNTRY_OF_BIRTH);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_height":
+                client.setBotStage(BotStage.WAITING_HEIGHT);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_PESEL":
+                client.setBotStage(BotStage.WAITING_PESEL);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_education":
+                client.setBotStage(BotStage.WAITING_EDUCATION);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_eyeColour":
+                client.setBotStage(BotStage.WAITING_EYE_COLOUR);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_cityOfResidence":
+                client.setBotStage(BotStage.WAITING_CITY_OF_RESIDENCE);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_streetOfResidence":
+                client.setBotStage(BotStage.WAITING_STREET_OF_RESIDENCE);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_houseNumber":
+                client.setBotStage(BotStage.WAITING_HOUSE_NUMBER);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_flatNumber":
+                client.setBotStage(BotStage.WAITING_FLAT_NUMBER);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_postcode":
+                client.setBotStage(BotStage.WAITING_POSTCODE);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_telephone":
+                client.setBotStage(BotStage.WAITING_TELEPHONE);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_lastArrivalDate":
+                client.setBotStage(BotStage.WAITING_LAST_ARRIVAL_DATE);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_passportNumber":
+                client.setBotStage(BotStage.WAITING_PASSPORT_NUMBER);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_residenceCard":
+                client.setBotStage(BotStage.WAITING_RESIDENCE_CARD);
+                sendStageText(chatID, client.getBotStage());
+                break;
+
+            case "edit_residenceCardExpireDate":
+                client.setBotStage(BotStage.WAITING_RESIDENCE_CARD_EXPIRE_DATE);
+                sendStageText(chatID, client.getBotStage());
                 break;
 
 
@@ -208,10 +355,17 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
             case WAITING_PASSPORT_NUMBER -> "Введите серию и номер вашего паспорта:";
             case WAITING_RESIDENCE_CARD -> "Укажите тип вашей карты побыту (например: сталый/часовый , либо '-'):";
             case WAITING_RESIDENCE_CARD_EXPIRE_DATE -> "Введите дату окончания карты побыту ГГГГ-ММ-ДД (если есть, иначе '-'):";
-            case VERIFICATION -> null;
+            case VERIFICATION -> "Спасибо! Анкета успешно изменена.\n" +
+                    " Проверьте ваши данные: \n" +
+                    client +
+                    "\n Если все верно , нажмите на кнопку ниже  - ВСЕ ВЕРНО" +
+                    ", если ещё хотите что то изменить, нажмите на кнопку -  ИЗМЕНИТЬ ДАННЫЕ ⬇️ ";
         };
-
-        sendMsg(chatId, text);
+        if (stage.equals(BotStage.VERIFICATION)){
+            verificationMessage(text, chatId);
+        } else {
+            sendMsg(chatId, text);
+        }
     }
 
     private boolean isValidEmailFormat(String emailStr) {
@@ -249,8 +403,23 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
         return matcher.matches();
     }
 
+    private void moveToNextStage(Boolean isEditMode, BotStage stage, Client currentClient,  Long chatID, String text) {
+        if (isEditMode){
+            currentClient.setBotStage(BotStage.VERIFICATION);
+            sendStageText(chatID, currentClient.getBotStage());
+        } else {
+            if (!stage.equals(BotStage.WAITING_MARITAL_STATUS)){
+                sendMsg(chatID, text);
+            } else {
+                maritalStatus(chatID);
+            }
+            currentClient.setBotStage(stage);
+        }
+    }
+
+
     @SneakyThrows
-    private void questionnaireFormMethod(Long chatID, Client client, Update update) {
+    private void questionnaireFormMethod(Long chatID, Client client, Update update, boolean questionnaireEditMode) {
         String text = update.getMessage().getText();
         switch (client.getBotStage()) {
 
@@ -263,8 +432,20 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     System.out.println(client.getBotStage());
                 } else {
                     client.setEmail(text);
-                    client.setBotStage(BotStage.WAITING_NAME);
-                    sendMsg(chatID, "Введите ваше имя в латинице:");
+//                    if (questionnaireEditMode){
+//                        client.setBotStage(BotStage.VERIFICATION);
+//                        sendStageText(chatID, client.getBotStage());
+//                    } else {
+//                        client.setBotStage(BotStage.WAITING_NAME);
+//                        sendMsg(chatID, "Введите ваше имя в латинице:");
+//                    }
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_NAME,
+                            client,
+                            chatID,
+                            "Введите ваше имя в латинице:"
+                    );
                 }
                 break;
 
@@ -274,8 +455,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы ! Проверьте внимательно!");
                 } else {
                     client.setName(text);
-                    client.setBotStage(BotStage.WAITING_SURNAME);
                     sendMsg(chatID, "Введите вашу текущую фамилию в латинице:");
+                    
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_SURNAME,
+                            client,
+                            chatID,
+                            "Введите вашу текущую фамилию в латинице:"
+                    );
                 }
                 break;
 
@@ -521,9 +709,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
 
                 if (text.equals("-")) {
                     client.setResidenceCardExpireDate("-");
-                    client.setBotStage(BotStage.IDLE);
-                    sendMsg(chatID, "Спасибо! Анкета успешно заполнена.\n Проверьте ваши данные\n" + client);
-                    writeDataToGoogleSheet(client);
+                    client.setBotStage(BotStage.VERIFICATION);
+                    //sendMsg(chatID, "Спасибо! Анкета успешно заполнена.\n Проверьте ваши данные\n" + client);
+                    //writeDataToGoogleSheet(client);
+                    verificationMessage("Спасибо! Анкета успешно заполнена.\n" +
+                            " Проверьте ваши данные: \n" +
+                            client +
+                            "\n Если все верно , нажмите на кнопку ниже  - ВСЕ ВЕРНО" +
+                            ", если хотите что то изменить нажмите на кнопку -  ИЗМЕНИТЬ ДАННЫЕ ⬇️ ", chatID
+                    );
                 } else {
                     client.setBotStage(BotStage.WAITING_RESIDENCE_CARD_EXPIRE_DATE);
                     sendMsg(chatID, "Введите дату окончания карты побыту ГГГГ-ММ-ДД (если есть, иначе '-'):");
@@ -542,7 +736,12 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     //sendMsg(chatID, "Спасибо! Анкета успешно заполнена.\n Проверьте ваши данные\n" + client + "\n Если все верно , нажмите на кнопку ниже ⬇️ ");
                     //writeDataToGoogleSheet(client);
 
-                    verificationMessage("Спасибо! Анкета успешно заполнена.\n Проверьте ваши данные: \n" + client + "\n Если все верно , нажмите на кнопку ниже ⬇️ ", chatID);
+                    verificationMessage("Спасибо! Анкета успешно заполнена.\n" +
+                                            " Проверьте ваши данные: \n" +
+                                            client +
+                                            "\n Если все верно , нажмите на кнопку ниже  - ВСЕ ВЕРНО" +
+                                            ", если хотите что то изменить нажмите на кнопку -  ИЗМЕНИТЬ ДАННЫЕ ⬇️ ", chatID
+                    );
                 } catch (DateTimeParseException e) {
                     sendMsg(chatID, "Неправильный формат даты! Пожалуйста, введите её строго в формате ГГГГ-ММ-ДД (например: 1995-12-25):");
                 }
@@ -565,12 +764,193 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 .chatId(chatId)
                 .build();
 
-        var button1 = InlineKeyboardButton.builder()
+        var buttonCorrect = InlineKeyboardButton.builder()
                 .text("Все верно!")
                 .callbackData("correct")
                 .build();
+        var buttonEdit = InlineKeyboardButton.builder()
+                .text("Изменить данные")
+                .callbackData("edit")
+                .build();
 
-        List<InlineKeyboardRow> inlineKeyboardRows = List.of(new InlineKeyboardRow(button1));
+        List<InlineKeyboardRow> inlineKeyboardRows = List.of(new InlineKeyboardRow(buttonCorrect),
+                                                                new InlineKeyboardRow(buttonEdit)
+        );
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboardRows);
+
+        message.setReplyMarkup(inlineKeyboardMarkup);
+
+        telegramClient.execute(message);
+    }
+    @SneakyThrows
+    private void editMessage(String msg, Long chatId) {
+        SendMessage message = SendMessage.builder()
+                .text(msg)
+                .chatId(chatId)
+                .build();
+
+
+        var btnEmail = InlineKeyboardButton.builder()
+                .text("📧 Email")
+                .callbackData("edit_email")
+                .build();
+
+        var btnName = InlineKeyboardButton.builder()
+                .text("👤 Имя")
+                .callbackData("edit_name")
+                .build();
+
+        var btnSurnameCurrent = InlineKeyboardButton.builder()
+                .text("👤 Текущая фамилия")
+                .callbackData("edit_surnameCurrent")
+                .build();
+
+        var btnSurnamePrevious = InlineKeyboardButton.builder()
+                .text("👤 Предыдущая фамилия")
+                .callbackData("edit_surnamePrevious")
+                .build();
+
+        var btnSurnameMaiden = InlineKeyboardButton.builder()
+                .text("👤 Девичья фамилия")
+                .callbackData("edit_surnameMaiden")
+                .build();
+
+        var btnDateOfBirth = InlineKeyboardButton.builder()
+                .text("📅 Дата рождения")
+                .callbackData("edit_dateOfBirth")
+                .build();
+
+
+        var btnFathersName = InlineKeyboardButton.builder()
+                .text("👨 Имя отца")
+                .callbackData("edit_fathersName")
+                .build();
+
+        var btnMothersName = InlineKeyboardButton.builder()
+                .text("👩 Имя матери")
+                .callbackData("edit_mothersName")
+                .build();
+
+        var btnMothersSurnameMaiden = InlineKeyboardButton.builder()
+                .text("👩 Девичья фамилия матери")
+                .callbackData("edit_mothersSurnameMaiden")
+                .build();
+
+
+        var btnMaritalStatus = InlineKeyboardButton.builder()
+                .text("💍 Семейное положение")
+                .callbackData("edit_maritalStatus")
+                .build();
+
+        var btnCityOfBirth = InlineKeyboardButton.builder()
+                .text("🏙 Город рождения")
+                .callbackData("edit_cityOfBirth")
+                .build();
+
+        var btnNationality = InlineKeyboardButton.builder()
+                .text("🌍 Национальность")
+                .callbackData("edit_nationality")
+                .build();
+
+        var btnCitizenship = InlineKeyboardButton.builder()
+                .text("🏛 Гражданство")
+                .callbackData("edit_citizenship")
+                .build();
+
+        var btnCountryOfBirth = InlineKeyboardButton.builder()
+                .text("🗺 Страна рождения")
+                .callbackData("edit_countryOfBirth")
+                .build();
+
+        var btnHeight = InlineKeyboardButton.builder()
+                .text("📏 Рост")
+                .callbackData("edit_height")
+                .build();
+
+        var btnPESEL = InlineKeyboardButton.builder()
+                .text("🔢 PESEL")
+                .callbackData("edit_PESEL")
+                .build();
+
+        var btnEducation = InlineKeyboardButton.builder()
+                .text("🎓 Образование")
+                .callbackData("edit_education")
+                .build();
+
+        var btnEyeColour = InlineKeyboardButton.builder()
+                .text("👁 Цвет глаз")
+                .callbackData("edit_eyeColour")
+                .build();
+
+
+        var btnCityOfResidence = InlineKeyboardButton.builder()
+                .text("🏙 Город проживания")
+                .callbackData("edit_cityOfResidence")
+                .build();
+
+        var btnStreetOfResidence = InlineKeyboardButton.builder()
+                .text("🛣 Улица проживания")
+                .callbackData("edit_streetOfResidence")
+                .build();
+
+        var btnHouseNumber = InlineKeyboardButton.builder()
+                .text("🏠 Номер дома")
+                .callbackData("edit_houseNumber")
+                .build();
+
+        var btnFlatNumber = InlineKeyboardButton.builder()
+                .text("🚪 Номер квартиры")
+                .callbackData("edit_flatNumber")
+                .build();
+
+        var btnPostcode = InlineKeyboardButton.builder()
+                .text("📮 Почтовый индекс")
+                .callbackData("edit_postcode")
+                .build();
+
+        var btnTelephone = InlineKeyboardButton.builder()
+                .text("📱 Телефон")
+                .callbackData("edit_telephone")
+                .build();
+
+
+        var btnLastArrivalDate = InlineKeyboardButton.builder()
+                .text("✈️ Дата последнего въезда в Польшу")
+                .callbackData("edit_lastArrivalDate")
+                .build();
+
+        var btnPassportNumber = InlineKeyboardButton.builder()
+                .text("📕 Номер паспорта")
+                .callbackData("edit_passportNumber")
+                .build();
+
+        var btnResidenceCard = InlineKeyboardButton.builder()
+                .text("💳 Карта побыту")
+                .callbackData("edit_residenceCard")
+                .build();
+
+        var btnResidenceCardExpireDate = InlineKeyboardButton.builder()
+                .text("⏳ Срок карты побыту")
+                .callbackData("edit_residenceCardExpireDate")
+                .build();
+
+        List<InlineKeyboardRow> inlineKeyboardRows = List.of(
+                new InlineKeyboardRow(btnEmail, btnTelephone),
+                new InlineKeyboardRow(btnName, btnSurnameCurrent),
+                new InlineKeyboardRow(btnSurnamePrevious, btnSurnameMaiden),
+                new InlineKeyboardRow(btnDateOfBirth, btnHeight),
+                new InlineKeyboardRow(btnFathersName, btnMothersName),
+                new InlineKeyboardRow(btnMothersSurnameMaiden, btnMaritalStatus),
+                new InlineKeyboardRow(btnCityOfBirth, btnCountryOfBirth),
+                new InlineKeyboardRow(btnNationality, btnCitizenship),
+                new InlineKeyboardRow(btnPESEL, btnEducation),
+                new InlineKeyboardRow(btnEyeColour, btnPostcode),
+                new InlineKeyboardRow(btnCityOfResidence, btnStreetOfResidence),
+                new InlineKeyboardRow(btnHouseNumber, btnFlatNumber),
+                new InlineKeyboardRow(btnLastArrivalDate, btnPassportNumber),
+                new InlineKeyboardRow(btnResidenceCard, btnResidenceCardExpireDate)
+        );
+
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboardRows);
 
         message.setReplyMarkup(inlineKeyboardMarkup);
