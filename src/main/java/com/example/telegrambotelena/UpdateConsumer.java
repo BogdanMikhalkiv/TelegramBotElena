@@ -455,7 +455,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы ! Проверьте внимательно!");
                 } else {
                     client.setName(text);
-                    sendMsg(chatID, "Введите вашу текущую фамилию в латинице:");
+//                    sendMsg(chatID, "Введите вашу текущую фамилию в латинице:");
                     
                     moveToNextStage(
                             questionnaireEditMode,
