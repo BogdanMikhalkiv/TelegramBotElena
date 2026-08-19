@@ -44,8 +44,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
     private final Pattern ALL_LETTERS_REGEX = Pattern.compile("^\\p{L}+$");
     private final Pattern POSTCODE_REGEX = Pattern.compile("^[0-9]{2}-[0-9]{3}$");
     private final Pattern PHONE_NUMBER_REGEX = Pattern.compile("^(\\+48)?\\d{9}$");
-
-
+    private final Pattern POLISH_TEXT_PATTERN = Pattern.compile("^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\\s-]+$");
 
     @Value("${bot.token}")
     private  String botToken;
@@ -104,7 +103,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
 
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboardRows);
 
-        if (!textMsg.equals("Введите Вашу электронную почту:")){
+        if (!textMsg.equals("Введите Вашу электронную почту:") || !textMsg.equals("Анкета успешно заполнена!")){
             sendMessage.setReplyMarkup(inlineKeyboardMarkup);
         }
 
@@ -373,6 +372,11 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
         return matcher.matches();
     }
 
+    private boolean isValidPolishLetters(String text) {
+        Matcher matcher = POLISH_TEXT_PATTERN.matcher(text);
+        return matcher.matches();
+    }
+
     private boolean isValidOnlyLettersInText(String text) {
         Matcher matcher = ONLY_LATIN_LETTERS_OR_SKIP_REGEX.matcher(text);
         return matcher.matches();
@@ -472,8 +476,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы! Проверьте внимательно!");
                 } else {
                     client.setSurnameCurrent(text);
-                    client.setBotStage(BotStage.WAITING_SURNAME_PREVIOUS);
-                    sendMsg(chatID, "Введите вашу предыдущую фамилию в латинице (если не было предыдущей фамилии,  просто прочерк '-') :");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_SURNAME_PREVIOUS,
+                            client,
+                            chatID,
+                            "Введите вашу предыдущую фамилию в латинице (если не было предыдущей фамилии,  просто прочерк '-') :"
+                    );
+//                    client.setBotStage(BotStage.WAITING_SURNAME_PREVIOUS);
+//                    sendMsg(chatID, "Введите вашу предыдущую фамилию в латинице (если не было предыдущей фамилии,  просто прочерк '-') :");
                 }
                 break;
 
@@ -482,8 +493,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы! Проверьте внимательно!");
                 } else {
                     client.setSurnamePrevious(text);
-                    client.setBotStage(BotStage.WAITING_SURNAME_MAIDEN);
-                    sendMsg(chatID, "Введите вашу девичью фамилию в латинице (если не было, просто прочерк '-'):");
+//                    client.setBotStage(BotStage.WAITING_SURNAME_MAIDEN);
+//                    sendMsg(chatID, "Введите вашу девичью фамилию в латинице (если не было, просто прочерк '-'):");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_SURNAME_MAIDEN,
+                            client,
+                            chatID,
+                            "Введите вашу девичью фамилию в латинице (если не было, просто прочерк '-'):"
+                    );
                 }
 
                 break;
@@ -493,8 +511,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы! Проверьте внимательно!");
                 } else {
                     client.setSurnameMaiden(text);
-                    client.setBotStage(BotStage.WAITING_DATE_OF_BIRTH);
-                    sendMsg(chatID, "Введите вашу дату рождения (в формате ГГГГ-ММ-ДД):");
+//                    client.setBotStage(BotStage.WAITING_DATE_OF_BIRTH);
+//                    sendMsg(chatID, "Введите вашу дату рождения (в формате ГГГГ-ММ-ДД):");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_DATE_OF_BIRTH,
+                            client,
+                            chatID,
+                            "Введите вашу дату рождения (в формате ГГГГ-ММ-ДД):"
+                    );
                 }
                 break;
 
@@ -505,9 +530,16 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     if (date.isAfter(LocalDate.now())) {
                         sendMsg(chatID, "Дата рождения не может быть в будущем! Введите вашу дату рождения (в формате ГГГГ-ММ-ДД):");
                     } else {
-                        client.setDateOfBirth(date); // или date, если в классе Client тип поля LocalDate
-                        client.setBotStage(BotStage.WAITING_FATHERS_NAME);
-                        sendMsg(chatID, "Введите имя вашего отца в латинице:");
+                        client.setDateOfBirth(date);
+//                        client.setBotStage(BotStage.WAITING_FATHERS_NAME);
+//                        sendMsg(chatID, "Введите имя вашего отца в латинице:");
+                        moveToNextStage(
+                                questionnaireEditMode,
+                                BotStage.WAITING_FATHERS_NAME,
+                                client,
+                                chatID,
+                                "Введите имя вашего отца в латинице:"
+                        );
                     }
 
                 } catch (DateTimeParseException e) {
@@ -520,8 +552,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы! Проверьте внимательно!");
                 } else {
                     client.setFathersName(text);
-                    client.setBotStage(BotStage.WAITING_MOTHERS_NAME);
-                    sendMsg(chatID, "Введите имя вашей матери в латинице:");
+//                    client.setBotStage(BotStage.WAITING_MOTHERS_NAME);
+//                    sendMsg(chatID, "Введите имя вашей матери в латинице:");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_MOTHERS_NAME,
+                            client,
+                            chatID,
+                            "Введите имя вашей матери в латинице:"
+                    );
                 }
                 break;
 
@@ -530,8 +569,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы! Проверьте внимательно!");
                 } else {
                     client.setMothersName(text);
-                    client.setBotStage(BotStage.WAITING_MOTHERS_SURNAME_MAIDEN);
-                    sendMsg(chatID, "Введите девичью фамилию вашей матери в латинице:");
+//                    client.setBotStage(BotStage.WAITING_MOTHERS_SURNAME_MAIDEN);
+//                    sendMsg(chatID, "Введите девичью фамилию вашей матери в латинице:");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_MOTHERS_SURNAME_MAIDEN,
+                            client,
+                            chatID,
+                            "Введите девичью фамилию вашей матери в латинице:"
+                    );
                 }
                 break;
 
@@ -540,16 +586,31 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы! Проверьте внимательно!");
                 } else {
                     client.setMothersSurnameMaiden(text);
-                    client.setBotStage(BotStage.WAITING_MARITAL_STATUS);
+//                    client.setBotStage(BotStage.WAITING_MARITAL_STATUS);
                     maritalStatus(chatID);
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_MARITAL_STATUS,
+                            client,
+                            chatID,
+                            "-"
+                    );
+
                 }
                 break;
 
             //добавить кнопки с выбором семейного положения!
             case WAITING_MARITAL_STATUS:
-                client.setMaritalStatus(text);
-                client.setBotStage(BotStage.WAITING_CITY_OF_BIRTH);
-                sendMsg(chatID, "Введите ваш город рождения:");
+                //client.setMaritalStatus(text);
+//                client.setBotStage(BotStage.WAITING_CITY_OF_BIRTH);
+//                sendMsg(chatID, "Введите ваш город рождения:");
+//                moveToNextStage(
+//                        questionnaireEditMode,
+//                        BotStage.WAITING_CITY_OF_BIRTH,
+//                        client,
+//                        chatID,
+//                        "Введите ваш город рождения:"
+//                );
                 break;
 
             case WAITING_CITY_OF_BIRTH:
@@ -557,8 +618,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
                 } else {
                     client.setCityOfBirth(text);
-                    client.setBotStage(BotStage.WAITING_NATIONALITY);
-                    sendMsg(chatID, "Укажите вашу национальность:");
+//                    client.setBotStage(BotStage.WAITING_NATIONALITY);
+//                    sendMsg(chatID, "Укажите вашу национальность:");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_NATIONALITY,
+                            client,
+                            chatID,
+                            "Укажите вашу национальность:"
+                    );
                 }
                 break;
 
@@ -567,8 +635,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
                 } else {
                     client.setNationality(text);
-                    client.setBotStage(BotStage.WAITING_CITIZENSHIP);
-                    sendMsg(chatID, "Укажите ваше гражданство:");
+//                    client.setBotStage(BotStage.WAITING_CITIZENSHIP);
+//                    sendMsg(chatID, "Укажите ваше гражданство:");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_CITIZENSHIP,
+                            client,
+                            chatID,
+                            "Укажите ваше гражданство:"
+                    );
                 }
                 break;
 
@@ -577,8 +652,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
                 } else {
                     client.setCitizenship(text);
-                    client.setBotStage(BotStage.WAITING_COUNTRY_OF_BIRTH);
-                    sendMsg(chatID, "Укажите страну вашего рождения:");
+//                    client.setBotStage(BotStage.WAITING_COUNTRY_OF_BIRTH);
+//                    sendMsg(chatID, "Укажите страну вашего рождения:");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_COUNTRY_OF_BIRTH,
+                            client,
+                            chatID,
+                            "Укажите страну вашего рождения:"
+                    );
                 }
                 break;
 
@@ -587,8 +669,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
                 } else {
                     client.setCountryOfBirth(text);
-                    client.setBotStage(BotStage.WAITING_HEIGHT);
-                    sendMsg(chatID, "Укажите ваш рост (в сантиметрах, например 180):");
+//                    client.setBotStage(BotStage.WAITING_HEIGHT);
+//                    sendMsg(chatID, "Укажите ваш рост (в сантиметрах, например 180):");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_HEIGHT,
+                            client,
+                            chatID,
+                            "Укажите ваш рост (в сантиметрах, например 180):"
+                    );
                 }
                 break;
 
@@ -597,8 +686,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID, "Рост должен быть ИСКЛЮЧИТЕЛЬНО в числовом формате, например : 180 или 167");
                 } else {
                     client.setHeight(text);
-                    client.setBotStage(BotStage.WAITING_PESEL);
-                    sendMsg(chatID, "Введите ваш номер PESEL (если есть, иначе '-'):");
+//                    client.setBotStage(BotStage.WAITING_PESEL);
+//                    sendMsg(chatID, "Введите ваш номер PESEL (если есть, иначе '-'):");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_PESEL,
+                            client,
+                            chatID,
+                            "Введите ваш номер PESEL (если есть, иначе '-'):"
+                    );
                 }
                 break;
 
@@ -609,16 +705,30 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID, "PESEL должны быть ИСКЛЮЧИТЕЛЬНО в числовом виде и минимум 11 цифр! ");
                 } else {
                     client.setPESEL(text);
-                    client.setBotStage(BotStage.WAITING_EDUCATION);
-                    sendMsg(chatID, "Укажите ваше образование (например: высшее, среднее):");
+//                    client.setBotStage(BotStage.WAITING_EDUCATION);
+//                    sendMsg(chatID, "Укажите ваше образование (например: высшее, среднее):");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_EDUCATION,
+                            client,
+                            chatID,
+                            "Укажите ваше образование (например: высшее, среднее):"
+                    );
                 }
                 break;
 
             //ДОБАВИТЬ КНОПКИ С ВЫБОРОМ ОБРАЗОВАНИЯ
             case WAITING_EDUCATION:
                 client.setEducation(text);
-                client.setBotStage(BotStage.WAITING_EYE_COLOUR);
-                sendMsg(chatID, "Укажите цвет ваших глаз:");
+//                client.setBotStage(BotStage.WAITING_EYE_COLOUR);
+//                sendMsg(chatID, "Укажите цвет ваших глаз:");
+                moveToNextStage(
+                        questionnaireEditMode,
+                        BotStage.WAITING_EYE_COLOUR,
+                        client,
+                        chatID,
+                        "Укажите цвет ваших глаз:"
+                );
                 break;
 
             case WAITING_EYE_COLOUR:
@@ -626,18 +736,32 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                      sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
                 } else {
                     client.setEyeColour(text);
-                    client.setBotStage(BotStage.WAITING_CITY_OF_RESIDENCE);
-                    sendMsg(chatID, "Введите город вашего текущего проживания по польски:");
+//                    client.setBotStage(BotStage.WAITING_CITY_OF_RESIDENCE);
+//                    sendMsg(chatID, "Введите город вашего текущего проживания по польски:");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_CITY_OF_RESIDENCE,
+                            client,
+                            chatID,
+                            "Введите город вашего текущего проживания в Польше:"
+                    );
                 }
                 break;
 
             case WAITING_CITY_OF_RESIDENCE:
-                if (!isValideAllLettersUnicode(text)){
-                    sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
+                if (!isValidPolishLetters(text)){
+                    sendMsg(chatID,"Вводимые данные должны быть ИСКЛЮЧИТЕЛЬНО на польском языке, без цифр и специальных знаков! Проверьте пожалуйста внимательнее!");
                 } else {
                     client.setCityOfResidence(text);
-                    client.setBotStage(BotStage.WAITING_STREET_OF_RESIDENCE);
-                    sendMsg(chatID, "Введите улицу проживания по польски:");
+//                    client.setBotStage(BotStage.WAITING_STREET_OF_RESIDENCE);
+//                    sendMsg(chatID, "Введите улицу проживания по польски:");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_STREET_OF_RESIDENCE,
+                            client,
+                            chatID,
+                            "Введите улицу проживания в Польше:"
+                    );
                 }
                 break;
 
@@ -646,21 +770,42 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
                 } else {
                     client.setStreetOfResidence(text);
-                    client.setBotStage(BotStage.WAITING_HOUSE_NUMBER);
-                    sendMsg(chatID, "Введите номер дома:");
+//                    client.setBotStage(BotStage.WAITING_HOUSE_NUMBER);
+//                    sendMsg(chatID, "Введите номер дома:");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_HOUSE_NUMBER,
+                            client,
+                            chatID,
+                            "Введите номер дома:"
+                    );
                 }
                 break;
 
             case WAITING_HOUSE_NUMBER:
                 client.setHouseNumber(text);
-                client.setBotStage(BotStage.WAITING_FLAT_NUMBER);
-                sendMsg(chatID, "Введите номер квартиры (если нет, введите '-'):");
+//                client.setBotStage(BotStage.WAITING_FLAT_NUMBER);
+//                sendMsg(chatID, "Введите номер квартиры (если нет, введите '-'):");
+                moveToNextStage(
+                        questionnaireEditMode,
+                        BotStage.WAITING_FLAT_NUMBER,
+                        client,
+                        chatID,
+                        "Введите номер квартиры (если нет, введите '-'):"
+                );
                 break;
 
             case WAITING_FLAT_NUMBER:
                 client.setFlatNumber(text);
-                client.setBotStage(BotStage.WAITING_POSTCODE);
-                sendMsg(chatID, "Введите ваш почтовый индекс:");
+//                client.setBotStage(BotStage.WAITING_POSTCODE);
+//                sendMsg(chatID, "Введите ваш почтовый индекс:");
+                moveToNextStage(
+                        questionnaireEditMode,
+                        BotStage.WAITING_POSTCODE,
+                        client,
+                        chatID,
+                        "Введите Ваш почтовый индекс:"
+                );
                 break;
 
             case WAITING_POSTCODE:
@@ -668,8 +813,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"ВводимыЙ формат почтового индекса ДОЛЖЕН состоят из 5 цифр в формате: ХХ-ХХХ ");
                 } else {
                     client.setPostcode(text);
-                    client.setBotStage(BotStage.WAITING_TELEPHONE);
-                    sendMsg(chatID, "Введите ваш контактный номер телефона:");
+//                    client.setBotStage(BotStage.WAITING_TELEPHONE);
+//                    sendMsg(chatID, "Введите ваш контактный номер телефона:");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_TELEPHONE,
+                            client,
+                            chatID,
+                            "Введите Ваш контактный номер телефона:"
+                    );
                 }
                 break;
 
@@ -678,8 +830,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     sendMsg(chatID,"Номер телефона должен быть в следующих форматах: +48ХХХХХХХХХ или просто из 9 цифр");
                 } else {
                     client.setTelephone(text);
-                    client.setBotStage(BotStage.WAITING_LAST_ARRIVAL_DATE);
-                    sendMsg(chatID, "Введите дату вашего последнего въезда в Польшу (ГГГГ-ММ-ДД):");
+//                    client.setBotStage(BotStage.WAITING_LAST_ARRIVAL_DATE);
+//                    sendMsg(chatID, "Введите дату вашего последнего въезда в Польшу (ГГГГ-ММ-ДД):");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_LAST_ARRIVAL_DATE,
+                            client,
+                            chatID,
+                            "Введите дату Вашего последнего въезда в Польшу (ГГГГ-ММ-ДД):"
+                    );
                 }
                 break;
 
@@ -688,8 +847,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                     LocalDate LAST_ARRIVAL_DATE = LocalDate.parse(text);
 
                     client.setLastArrivalDate(LAST_ARRIVAL_DATE);
-                    client.setBotStage(BotStage.WAITING_PASSPORT_NUMBER);
-                    sendMsg(chatID, "Введите серию и номер вашего паспорта:");
+//                    client.setBotStage(BotStage.WAITING_PASSPORT_NUMBER);
+//                    sendMsg(chatID, "Введите серию и номер вашего паспорта:");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_PASSPORT_NUMBER,
+                            client,
+                            chatID,
+                            "Введите серию и номер Вашего паспорта:"
+                    );
                 }catch (DateTimeParseException e) {
                     sendMsg(chatID, "Неправильный формат даты! Пожалуйста, введите её строго в формате ГГГГ-ММ-ДД (например - 1995-12-25):");
                 }
@@ -699,8 +865,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
 
             case WAITING_PASSPORT_NUMBER:
                 client.setPassportNumber(text);
-                client.setBotStage(BotStage.WAITING_RESIDENCE_CARD);
-                sendMsg(chatID, "Укажите тип вашей карты побыту (например: сталый/часовый , либо '-'):");
+//                client.setBotStage(BotStage.WAITING_RESIDENCE_CARD);
+//                sendMsg(chatID, "Укажите тип вашей карты побыту (например: сталый/часовый , либо '-'):");
+                moveToNextStage(
+                        questionnaireEditMode,
+                        BotStage.WAITING_RESIDENCE_CARD,
+                        client,
+                        chatID,
+                        "Укажите тип Вашей карты побыту (например: сталый/часовый , если нету карты побыту впишите прочерк '-'):"
+                );
                 break;
 
             case WAITING_RESIDENCE_CARD:
@@ -719,8 +892,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                             ", если хотите что то изменить нажмите на кнопку -  ИЗМЕНИТЬ ДАННЫЕ ⬇️ ", chatID
                     );
                 } else {
-                    client.setBotStage(BotStage.WAITING_RESIDENCE_CARD_EXPIRE_DATE);
-                    sendMsg(chatID, "Введите дату окончания карты побыту ГГГГ-ММ-ДД (если есть, иначе '-'):");
+//                    client.setBotStage(BotStage.WAITING_RESIDENCE_CARD_EXPIRE_DATE);
+//                    sendMsg(chatID, "Введите дату окончания карты побыту ГГГГ-ММ-ДД (если есть, иначе '-'):");
+                    moveToNextStage(
+                            questionnaireEditMode,
+                            BotStage.WAITING_RESIDENCE_CARD_EXPIRE_DATE,
+                            client,
+                            chatID,
+                            "Введите дату окончания карты побыту ГГГГ-ММ-ДД:"
+                    );
                 }
                 break;
 
