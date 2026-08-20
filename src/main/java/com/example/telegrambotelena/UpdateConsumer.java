@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 @Component
 public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;
-    private Client client;
+    // private Client client;
     private boolean questionnaireEditMode = false;
     private final Map<Long,Client> clientMap = new HashMap<>();
     private final Pattern VALID_EMAIL_ADDRESS_REGEX =
@@ -52,7 +52,6 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
 
     public UpdateConsumer(@Value("${bot.token}") String botToken , Client client) {
         this.telegramClient = new OkHttpTelegramClient(botToken);
-        this.client = client;
     }
 
     @SneakyThrows
@@ -66,8 +65,8 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
             return;
         }
 
-         client = clientMap.computeIfAbsent(
-                getChatID(update),
+         Client client = clientMap.computeIfAbsent(
+                chatId,
                 k -> Client.builder().botStage(BotStage.IDLE).build());
 
         if (update.hasMessage()) {
@@ -96,7 +95,6 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 .callbackData("back")
                 .build();
 
-        InlineKeyboardButton button = new InlineKeyboardButton("dfdf");
 
         List<InlineKeyboardRow> inlineKeyboardRows =
                 List.of(new InlineKeyboardRow(prevBtn));
@@ -162,7 +160,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
 
             case "back":
                 client.setBotStage(client.getBotStage().prev());
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "correct":
@@ -180,142 +178,142 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
 
             case "edit_email":
                 client.setBotStage(BotStage.WAITING_EMAIL);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_name":
                 client.setBotStage(BotStage.WAITING_NAME);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_surnameCurrent":
                 client.setBotStage(BotStage.WAITING_SURNAME);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_surnamePrevious":
                 client.setBotStage(BotStage.WAITING_SURNAME_PREVIOUS);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_surnameMaiden":
                 client.setBotStage(BotStage.WAITING_SURNAME_MAIDEN);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_dateOfBirth":
                 client.setBotStage(BotStage.WAITING_DATE_OF_BIRTH);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_fathersName":
                 client.setBotStage(BotStage.WAITING_FATHERS_NAME);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_mothersName":
                 client.setBotStage(BotStage.WAITING_MOTHERS_NAME);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_mothersSurnameMaiden":
                 client.setBotStage(BotStage.WAITING_MOTHERS_SURNAME_MAIDEN);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_maritalStatus":
                 client.setBotStage(BotStage.WAITING_MARITAL_STATUS);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_cityOfBirth":
                 client.setBotStage(BotStage.WAITING_CITY_OF_BIRTH);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_nationality":
                 client.setBotStage(BotStage.WAITING_NATIONALITY);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_citizenship":
                 client.setBotStage(BotStage.WAITING_CITIZENSHIP);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_countryOfBirth":
                 client.setBotStage(BotStage.WAITING_COUNTRY_OF_BIRTH);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_height":
                 client.setBotStage(BotStage.WAITING_HEIGHT);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_PESEL":
                 client.setBotStage(BotStage.WAITING_PESEL);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_education":
                 client.setBotStage(BotStage.WAITING_EDUCATION);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_eyeColour":
                 client.setBotStage(BotStage.WAITING_EYE_COLOUR);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_cityOfResidence":
                 client.setBotStage(BotStage.WAITING_CITY_OF_RESIDENCE);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_streetOfResidence":
                 client.setBotStage(BotStage.WAITING_STREET_OF_RESIDENCE);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_houseNumber":
                 client.setBotStage(BotStage.WAITING_HOUSE_NUMBER);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_flatNumber":
                 client.setBotStage(BotStage.WAITING_FLAT_NUMBER);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_postcode":
                 client.setBotStage(BotStage.WAITING_POSTCODE);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_telephone":
                 client.setBotStage(BotStage.WAITING_TELEPHONE);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_lastArrivalDate":
                 client.setBotStage(BotStage.WAITING_LAST_ARRIVAL_DATE);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_passportNumber":
                 client.setBotStage(BotStage.WAITING_PASSPORT_NUMBER);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_residenceCard":
                 client.setBotStage(BotStage.WAITING_RESIDENCE_CARD);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
             case "edit_residenceCardExpireDate":
                 client.setBotStage(BotStage.WAITING_RESIDENCE_CARD_EXPIRE_DATE);
-                sendStageText(chatID, client.getBotStage());
+                sendStageText(chatID, client.getBotStage(),client);
                 break;
 
 
@@ -323,7 +321,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
 
     }
 
-    public void sendStageText(Long chatId, BotStage stage) {
+    public void sendStageText(Long chatId, BotStage stage, Client client) {
         String text = switch (stage) {
             case IDLE -> null;
             case WAITING_EMAIL -> "Введите Вашу электронную почту:";
@@ -410,7 +408,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
     private void moveToNextStage(Boolean isEditMode, BotStage stage, Client currentClient,  Long chatID, String text) {
         if (isEditMode){
             currentClient.setBotStage(BotStage.VERIFICATION);
-            sendStageText(chatID, currentClient.getBotStage());
+            sendStageText(chatID, currentClient.getBotStage(),currentClient);
         } else {
             if (!stage.equals(BotStage.WAITING_MARITAL_STATUS)){
                 sendMsg(chatID, text);
@@ -587,7 +585,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 } else {
                     client.setMothersSurnameMaiden(text);
 //                    client.setBotStage(BotStage.WAITING_MARITAL_STATUS);
-                    maritalStatus(chatID);
+                    //maritalStatus(chatID);
                     moveToNextStage(
                             questionnaireEditMode,
                             BotStage.WAITING_MARITAL_STATUS,
