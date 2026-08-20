@@ -90,18 +90,17 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 .chatId(chatID)
                 .build();
 
-        var prevBtn = InlineKeyboardButton.builder()
-                .text("Назад")
-                .callbackData("back")
-                .build();
+        if (!textMsg.equals("Введите Вашу электронную почту:") && !textMsg.equals("Анкета успешно заполнена!")){
+            var prevBtn = InlineKeyboardButton.builder()
+                    .text("Назад")
+                    .callbackData("back")
+                    .build();
 
 
-        List<InlineKeyboardRow> inlineKeyboardRows =
-                List.of(new InlineKeyboardRow(prevBtn));
+            List<InlineKeyboardRow> inlineKeyboardRows =
+                    List.of(new InlineKeyboardRow(prevBtn));
 
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboardRows);
-
-        if (!textMsg.equals("Введите Вашу электронную почту:") || !textMsg.equals("Анкета успешно заполнена!")){
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboardRows);
             sendMessage.setReplyMarkup(inlineKeyboardMarkup);
         }
 
