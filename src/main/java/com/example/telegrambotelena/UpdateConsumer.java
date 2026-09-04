@@ -40,7 +40,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
             Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
     private final Pattern ONLY_LATIN_LETTERS_OR_SKIP_REGEX = Pattern.compile("^([a-zA-Z]+|-)$");
     private final Pattern HEIGHT_REGEX = Pattern.compile("^\\d{1,3}$");
-    private final Pattern PESEL_REGEX = Pattern.compile("^\\d{11}$");
+    private final Pattern PESEL_REGEX = Pattern.compile("^(\\d{11}|-)$");
     private final Pattern ALL_LETTERS_REGEX = Pattern.compile("^\\p{L}+$");
     private final Pattern POSTCODE_REGEX = Pattern.compile("^[0-9]{2}-[0-9]{3}$");
     private final Pattern PHONE_NUMBER_REGEX = Pattern.compile("^(\\+48)?\\d{9}$");
@@ -359,6 +359,8 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
         };
         if (stage.equals(BotStage.VERIFICATION)){
             verificationMessage(text, chatId);
+        }else if (stage.equals(BotStage.WAITING_MARITAL_STATUS)){
+            maritalStatus(chatId);
         } else {
             sendMsg(chatId, text);
         }
@@ -429,7 +431,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
             case WAITING_EMAIL:
 
                 if (!isValidEmailFormat(text)) {
-                    sendMsg(chatID, "Неправильный формат эл. почты! Внимательно проверьте!");
+                    sendMsg(chatID, "Неправильный формат эл. почты! Внимательно проверьте и напишите еще раз НИЖЕ!");
                     System.out.println(client.getBotStage());
                 } else {
                     client.setEmail(text);
@@ -453,7 +455,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
             case WAITING_NAME:
 
                 if (!isValidOnlyLettersInText(text)) {
-                    sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы ! Проверьте внимательно!");
+                    sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы ! Проверьте внимательно и напишите еще раз НИЖЕ!");
                 } else {
                     client.setName(text);
 //                    sendMsg(chatID, "Введите вашу текущую фамилию в латинице:");
@@ -470,7 +472,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
 
             case WAITING_SURNAME:
                 if (!isValidOnlyLettersInText(text)) {
-                    sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы! Проверьте внимательно!");
+                    sendMsg(chatID,"Вводимые данные должны содержать исключительно латинские буквы! Проверьте внимательно и напишите еще раз НИЖЕ!");
                 } else {
                     client.setSurnameCurrent(text);
                     moveToNextStage(
@@ -699,7 +701,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
             case WAITING_PESEL:
 
                 if (!isValidPESEL(text)){
-                    sendMsg(chatID, "PESEL должны быть ИСКЛЮЧИТЕЛЬНО в числовом виде и минимум 11 цифр! ");
+                    sendMsg(chatID, "PESEL должен быть ИСКЛЮЧИТЕЛЬНО в числовом виде и минимум 11 цифр! ");
                 } else {
                     client.setPESEL(text);
 //                    client.setBotStage(BotStage.WAITING_EDUCATION);
@@ -730,7 +732,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
 
             case WAITING_EYE_COLOUR:
                 if (!isValideAllLettersUnicode(text)){
-                     sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
+                     sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее и напишите еще раз НИЖЕ!");
                 } else {
                     client.setEyeColour(text);
 //                    client.setBotStage(BotStage.WAITING_CITY_OF_RESIDENCE);
@@ -740,14 +742,15 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                             BotStage.WAITING_CITY_OF_RESIDENCE,
                             client,
                             chatID,
-                            "Введите город вашего текущего проживания в Польше:"
+                            "Введите город/населённый пункт вашего текущего проживания в Польше(по польски):"
                     );
                 }
                 break;
 
             case WAITING_CITY_OF_RESIDENCE:
                 if (!isValidPolishLetters(text)){
-                    sendMsg(chatID,"Вводимые данные должны быть ИСКЛЮЧИТЕЛЬНО на польском языке, без цифр и специальных знаков! Проверьте пожалуйста внимательнее!");
+                    sendMsg(chatID,
+                            "Название города/населённого пункта должно быть ИСКЛЮЧИТЕЛЬНО на польском языке, без цифр и специальных знаков! Проверьте пожалуйста внимательнее и напишите еще раз НИЖЕ!");
                 } else {
                     client.setCityOfResidence(text);
 //                    client.setBotStage(BotStage.WAITING_STREET_OF_RESIDENCE);
@@ -757,14 +760,14 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                             BotStage.WAITING_STREET_OF_RESIDENCE,
                             client,
                             chatID,
-                            "Введите улицу проживания в Польше:"
+                            "Введите улицу проживания в Польше(по польски):"
                     );
                 }
                 break;
 
             case WAITING_STREET_OF_RESIDENCE:
                 if (!isValideAllLettersUnicode(text)){
-                    sendMsg(chatID,"Вводимые данные должны соджержать ИСКЛЮЧИТЕЛЬНО буквы! Проверьте внимательнее!");
+                    sendMsg(chatID,"Название улицы должно быть ИСКЛЮЧИТЕЛЬНО на польском языке! Проверьте внимательнее и напишите еще раз НИЖЕ!");
                 } else {
                     client.setStreetOfResidence(text);
 //                    client.setBotStage(BotStage.WAITING_HOUSE_NUMBER);
@@ -807,7 +810,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
 
             case WAITING_POSTCODE:
                 if (!isValidePostcode(text)) {
-                    sendMsg(chatID,"ВводимыЙ формат почтового индекса ДОЛЖЕН состоят из 5 цифр в формате: ХХ-ХХХ ");
+                    sendMsg(chatID,"ВводимыЙ формат почтового индекса ДОЛЖЕН состоят из 5 цифр в формате: ХХ-ХХХ. Напишите еще раз НИЖЕ ");
                 } else {
                     client.setPostcode(text);
 //                    client.setBotStage(BotStage.WAITING_TELEPHONE);
@@ -817,14 +820,14 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                             BotStage.WAITING_TELEPHONE,
                             client,
                             chatID,
-                            "Введите Ваш контактный номер телефона:"
+                            "Введите Ваш контактный номер телефона в следующих форматах - +48ХХХХХХХХХ или просто из 9 цифр:"
                     );
                 }
                 break;
 
             case WAITING_TELEPHONE:
                 if (!isValidPhoneNumber(text)) {
-                    sendMsg(chatID,"Номер телефона должен быть в следующих форматах: +48ХХХХХХХХХ или просто из 9 цифр");
+                    sendMsg(chatID,"Номер телефона должен быть в следующих форматах: +48ХХХХХХХХХ или просто из 9 цифр. Напишите еще раз НИЖЕ");
                 } else {
                     client.setTelephone(text);
 //                    client.setBotStage(BotStage.WAITING_LAST_ARRIVAL_DATE);
@@ -854,7 +857,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                             "Введите серию и номер Вашего паспорта:"
                     );
                 }catch (DateTimeParseException e) {
-                    sendMsg(chatID, "Неправильный формат даты! Пожалуйста, введите её строго в формате ГГГГ-ММ-ДД (например - 1995-12-25):");
+                    sendMsg(chatID, "Неправильный формат даты! Пожалуйста, введите еще раз НИЖЕ строго в формате ГГГГ-ММ-ДД (например - 1995-12-25):");
                 }
 
 
@@ -880,8 +883,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 if (text.equals("-")) {
                     client.setResidenceCardExpireDate("-");
                     client.setBotStage(BotStage.VERIFICATION);
-                    //sendMsg(chatID, "Спасибо! Анкета успешно заполнена.\n Проверьте ваши данные\n" + client);
-                    //writeDataToGoogleSheet(client);
+
                     verificationMessage("Спасибо! Анкета успешно заполнена.\n" +
                             " Проверьте ваши данные: \n" +
                             client +
@@ -949,6 +951,8 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 .text("Изменить данные")
                 .callbackData("edit")
                 .build();
+
+
 
         List<InlineKeyboardRow> inlineKeyboardRows = List.of(new InlineKeyboardRow(buttonCorrect),
                                                                 new InlineKeyboardRow(buttonEdit)
