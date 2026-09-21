@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -59,6 +61,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
     public void consume(Update update) {
         System.out.println(getChatID(update));
         Long chatId = getChatID(update);
+
 
 
         if (chatId == null){
@@ -163,10 +166,19 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 break;
 
             case "correct":
-                sendMsg(chatID,"Анкета успешно заполнена!");
+                //sendMsg(chatID,"Анкета успешно заполнена!");
                 client.setBotStage(BotStage.IDLE);
                 questionnaireEditMode = false;
                 writeDataToGoogleSheet(client);
+                Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
+                EditMessageText editMessage = EditMessageText.builder()
+                        .chatId(chatID)
+                        .messageId(messageId)
+                        .text("Анкета успешно заполнена!")
+                        .replyMarkup(null) // Передача null полностью удаляет кнопки
+                        .build();
+
+                telegramClient.execute(editMessage);
                 break;
 
             case "edit":
@@ -449,6 +461,8 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                             chatID,
                             "Введите ваше имя в латинице:"
                     );
+
+
                 }
                 break;
 
@@ -846,18 +860,23 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
                 try {
                     LocalDate LAST_ARRIVAL_DATE = LocalDate.parse(text);
 
-                    client.setLastArrivalDate(LAST_ARRIVAL_DATE);
+                    if (LAST_ARRIVAL_DATE.isAfter(LocalDate.now())){
+                        sendMsg(chatID, "Дата последнего въезда в Польшу НЕ МОЖЕТ БЫТЬ после СЕГОДНЯШНЕЙ  даты!" +
+                                "\nВведите ещё раз НИЖЕ строго в формате ГГГГ-ММ-ДД (например: 1995-12-25):");
+                    }else {
+                        client.setLastArrivalDate(LAST_ARRIVAL_DATE);
 //                    client.setBotStage(BotStage.WAITING_PASSPORT_NUMBER);
 //                    sendMsg(chatID, "Введите серию и номер вашего паспорта:");
-                    moveToNextStage(
-                            questionnaireEditMode,
-                            BotStage.WAITING_PASSPORT_NUMBER,
-                            client,
-                            chatID,
-                            "Введите серию и номер Вашего паспорта:"
-                    );
+                        moveToNextStage(
+                                questionnaireEditMode,
+                                BotStage.WAITING_PASSPORT_NUMBER,
+                                client,
+                                chatID,
+                                "Введите серию и номер Вашего паспорта:"
+                        );
+                    }
                 }catch (DateTimeParseException e) {
-                    sendMsg(chatID, "Неправильный формат даты! Пожалуйста, введите еще раз НИЖЕ строго в формате ГГГГ-ММ-ДД (например - 1995-12-25):");
+                    sendMsg(chatID, "Неправильный формат даты! Пожалуйста, введите еще раз НИЖЕ строго в формате ГГГГ-ММ-ДД (например: 1995-12-25):");
                 }
 
 
@@ -960,6 +979,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(inlineKeyboardRows);
 
         message.setReplyMarkup(inlineKeyboardMarkup);
+
 
         telegramClient.execute(message);
     }
@@ -1182,7 +1202,7 @@ public class UpdateConsumer  implements LongPollingSingleThreadUpdateConsumer {
     private void maritalStatus(Long chatId) {
         System.out.println("dfdfdfdfkgfgonbodfgnbodfgnbfg");
         SendMessage message = SendMessage.builder()
-                .text("Укажите ваше семейное положение: ")
+                .text("Выберите ваше семейное положение НИЖЕ: ")
                 .chatId(chatId)
                 .build();
 
